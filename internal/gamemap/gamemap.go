@@ -25,11 +25,11 @@ var CellVisualSymbol = map[Cell]string{
 
 type GameMap struct {
 	Grid   [][]Cell
-	Width  int32
-	Height int32
+	Width  int
+	Height int
 }
 
-func NewSymmetricGameMap(Width int32, Height int32, occupancyPercantage float32) (GameMap, error) {
+func NewSymmetricGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, error) {
 	gameMap, err := NewGameMap(Width, Height, occupancyPercantage)
 	if err != nil {
 		return gameMap, err
@@ -61,9 +61,9 @@ func NewSymmetricGameMap(Width int32, Height int32, occupancyPercantage float32)
 	return symGameMap, nil
 }
 
-func NewGameMap(Width int32, Height int32, occupancyPercantage float32) (GameMap, error) {
-	if Width <= 0 || Height <= 0 {
-		return GameMap{}, errors.New("width or heigth is less than 1")
+func NewGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, error) {
+	if Width < 5 || Height < 5 {
+		return GameMap{}, errors.New("width or heigth is less than 5")
 	}
 
 	grid := make([][]Cell, Height)
@@ -77,10 +77,11 @@ func NewGameMap(Width int32, Height int32, occupancyPercantage float32) (GameMap
 		Height: Height,
 	}
 
-	var wallsCount int = int(float32(gameMap.Height*gameMap.Width-gameMap.perimeter()) * occupancyPercantage)
+	var wallsCount int = int(float32(gameMap.Height*gameMap.Width-4) * occupancyPercantage)
 
-	gameMap.GenerateMap(wallsCount)
 	gameMap.Grid[0][0] = Player
+	gameMap.Grid[gameMap.Height-1][gameMap.Width-1] = Food
+	gameMap.GenerateMap(wallsCount)
 
 	return gameMap, nil
 }
@@ -88,8 +89,8 @@ func NewGameMap(Width int32, Height int32, occupancyPercantage float32) (GameMap
 func (gameMap *GameMap) GenerateMap(wallsCount int) {
 	var currentObstacleCount int = 0
 	for i := 0; i < wallsCount; i++ {
-		x := rand.Int31()%(gameMap.Width-2) + 1
-		y := rand.Int31()%(gameMap.Height-2) + 1
+		x := rand.Int() % gameMap.Width
+		y := rand.Int() % gameMap.Height
 
 		if gameMap.Grid[y][x] != Empty {
 			continue
@@ -97,8 +98,7 @@ func (gameMap *GameMap) GenerateMap(wallsCount int) {
 
 		gameMap.Grid[y][x] = Wall
 		currentObstacleCount++
-
-		if !gameMap.IsFullyAccessible(int32(currentObstacleCount)) {
+		if !gameMap.IsFullyAccessible(int(currentObstacleCount)) {
 			gameMap.Grid[y][x] = Empty
 			currentObstacleCount--
 		}
@@ -114,61 +114,48 @@ func (gameMap *GameMap) GenerateMap(wallsCount int) {
 
 }
 
-func (gameMap GameMap) IsFullyAccessible(currentObstacleCount int32) bool {
+func (gameMap GameMap) IsFullyAccessible(currentObstacleCount int) bool {
 
 	mapFlags := make([][]bool, gameMap.Height)
 	for i := range mapFlags {
 		mapFlags[i] = make([]bool, gameMap.Width)
 	}
 
-	queue := make([]utility.Vector2D[int32], 0)
-	var i int32
-	for i = 0; i < gameMap.Width; i++ {
-		queue = append(queue, utility.Vector2D[int32]{X: i, Y: 0})
-		queue = append(queue, utility.Vector2D[int32]{X: i, Y: gameMap.Height - 1})
-		mapFlags[0][i] = true
-		mapFlags[gameMap.Height-1][i] = true
-	}
-	for i = 0; i < gameMap.Height; i++ {
-		queue = append(queue, utility.Vector2D[int32]{X: 0, Y: i})
-		queue = append(queue, utility.Vector2D[int32]{X: gameMap.Width - 1, Y: i})
-		mapFlags[i][0] = true
-		mapFlags[i][gameMap.Width-1] = true
-	}
+	queue := make([]utility.Vector2D[int], 0)
+	queue = append(queue, utility.Vector2D[int]{X: 0, Y: 0})
 
-	var accesibleCellCount int32 = gameMap.perimeter()
+	mapFlags[0][0] = true
+	var accesibleCellCount int = 1
 
 	for len(queue) > 0 {
 		cell := queue[0]
 		queue = queue[1:]
 
-		var x, y int32
-		for x = -1; x < 1; x++ {
-			for y = -1; y < 1; y++ {
-				neighbourX := cell.X + x
-				neighbourY := cell.Y + y
+		var x, y int
+		for x = -1; x < 2; x++ {
+			for y = -1; y < 2; y++ {
 				if x != 0 && y != 0 {
 					continue
 				}
-				if neighbourX < 0 || neighbourX >= gameMap.Width || neighbourY < 0 || neighbourY >= gameMap.Height {
+				neighbour := utility.Vector2D[int]{
+					X: cell.X + x,
+					Y: cell.Y + y,
+				}
+				if !neighbour.InBound(0, gameMap.Width, 0, gameMap.Height) {
 					continue
 				}
-				if mapFlags[neighbourY][neighbourX] || gameMap.Grid[neighbourY][neighbourX] != Empty {
+				if mapFlags[neighbour.Y][neighbour.X] || gameMap.GetCell(neighbour) == Wall {
 					continue
 				}
-				mapFlags[neighbourY][neighbourX] = true
-				queue = append(queue, utility.Vector2D[int32]{X: neighbourX, Y: neighbourY})
+				mapFlags[neighbour.Y][neighbour.X] = true
+				queue = append(queue, neighbour)
 				accesibleCellCount++
 			}
 		}
 	}
 
-	var targetAccessibleCellCount int32 = gameMap.Width*gameMap.Height - currentObstacleCount
+	var targetAccessibleCellCount int = gameMap.Width*gameMap.Height - currentObstacleCount
 	return targetAccessibleCellCount == accesibleCellCount
-}
-
-func (gameMap GameMap) perimeter() int32 {
-	return gameMap.Width*2 + gameMap.Height*2 - 4
 }
 
 func (gameMap GameMap) String() string {
@@ -182,4 +169,12 @@ func (gameMap GameMap) String() string {
 		result += "\n"
 	}
 	return result
+}
+
+func (gameMap GameMap) GetCell(position utility.Vector2D[int]) Cell {
+	return gameMap.Grid[position.Y][position.X]
+}
+
+func (gameMap GameMap) SetCell(position utility.Vector2D[int], value Cell) {
+	gameMap.Grid[position.Y][position.X] = value
 }
