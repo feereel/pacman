@@ -16,17 +16,11 @@ const (
 	Wall   Cell = 0xFF
 )
 
-var CellVisualSymbol = map[Cell]string{
-	Empty:  "_",
-	Player: "@",
-	Food:   ".",
-	Wall:   "#",
-}
-
 type GameMap struct {
-	Grid   [][]Cell
-	Width  int
-	Height int
+	Grid      [][]Cell
+	Width     int
+	Height    int
+	FoodCount int
 }
 
 func NewSymmetricGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, error) {
@@ -44,9 +38,10 @@ func NewSymmetricGameMap(Width int, Height int, occupancyPercantage float32) (Ga
 	}
 
 	symGameMap := GameMap{
-		Grid:   grid,
-		Width:  symWidth,
-		Height: symHeight,
+		Grid:      grid,
+		Width:     symWidth,
+		Height:    symHeight,
+		FoodCount: gameMap.FoodCount * 2,
 	}
 
 	for y := 0; y < int(Height); y++ {
@@ -108,6 +103,7 @@ func (gameMap *GameMap) GenerateMap(wallsCount int) {
 		for x := 0; x < int(gameMap.Width); x++ {
 			if gameMap.Grid[y][x] == Empty {
 				gameMap.Grid[y][x] = Food
+				gameMap.FoodCount++
 			}
 		}
 	}
@@ -156,19 +152,6 @@ func (gameMap GameMap) IsFullyAccessible(currentObstacleCount int) bool {
 
 	var targetAccessibleCellCount int = gameMap.Width*gameMap.Height - currentObstacleCount
 	return targetAccessibleCellCount == accesibleCellCount
-}
-
-func (gameMap GameMap) String() string {
-
-	var result string
-
-	for y := 0; y < int(gameMap.Height); y++ {
-		for x := 0; x < int(gameMap.Width); x++ {
-			result += CellVisualSymbol[gameMap.Grid[y][x]] + " "
-		}
-		result += "\n"
-	}
-	return result
 }
 
 func (gameMap GameMap) GetCell(position utility.Vector2D[int]) Cell {

@@ -1,8 +1,6 @@
 package logic
 
 import (
-	"fmt"
-
 	"github.com/feereel/pacman/internal/gamemap"
 	"github.com/feereel/pacman/internal/models"
 )
@@ -17,7 +15,6 @@ func ProcessFrame(players []*models.Player, gameMap *gamemap.GameMap) {
 
 		gameMap.SetCell(player.Position, gamemap.Player)
 	}
-	fmt.Println(players[0])
 }
 
 func CanMoveForward(player *models.Player, gameMap *gamemap.GameMap) bool {
@@ -30,5 +27,6 @@ func EatFood(player *models.Player, gameMap *gamemap.GameMap) {
 		return
 	}
 	gameMap.SetCell(player.Position, gamemap.Empty)
+	gameMap.FoodCount--
 	player.Score++
 }

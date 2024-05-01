@@ -21,8 +21,9 @@ var MapDirrections = map[MoveDirection]utility.Vector2D[int]{
 }
 
 type Player struct {
-	Name  string
-	Score int
+	Name       string
+	Score      int
+	Controlled bool
 
 	Position  utility.Vector2D[int]
 	Direction utility.Vector2D[int]
@@ -30,10 +31,11 @@ type Player struct {
 
 func NewPlayer(name string, startX int, startY int, direction MoveDirection) Player {
 	player := Player{
-		Name:      name,
-		Score:     0,
-		Position:  utility.Vector2D[int]{X: startX, Y: startY},
-		Direction: MapDirrections[direction],
+		Name:       name,
+		Score:      0,
+		Position:   utility.Vector2D[int]{X: startX, Y: startY},
+		Direction:  MapDirrections[direction],
+		Controlled: false,
 	}
 
 	return player
