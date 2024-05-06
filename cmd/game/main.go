@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/feereel/pacman/cmd/client"
+	"github.com/feereel/pacman/cmd/server"
 )
 
 func usage() {
@@ -14,10 +15,17 @@ func usage() {
 }
 
 func main() {
-	var showHelp bool
-	flag.BoolVar(&showHelp, "h", false, "print usage")
-	flag.BoolVar(&showHelp, "help", false, "print usage")
+	var showHelp, runAsServer bool
+	var port, playersCount int
+	var ip, playerName string
+	mapWidth, mapHeight, mapOccupancy := 20, 15, 0.2
 
+	flag.BoolVar(&showHelp, "h", false, "print usage")
+	flag.BoolVar(&runAsServer, "s", false, "run in server mode")
+	flag.IntVar(&port, "p", 4444, "port of a server")
+	flag.IntVar(&playersCount, "n", 2, "players count")
+	flag.StringVar(&ip, "ip", "127.0.0.1", "ip of a server")
+	flag.StringVar(&playerName, "name", "anonymous", "name of created player")
 	flag.Usage = usage
 	flag.Parse()
 	if showHelp {
@@ -25,5 +33,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	os.Exit(client.Run())
+	if runAsServer {
+		os.Exit(server.Run(port, playersCount, mapWidth, mapHeight, float32(mapOccupancy)))
+	} else {
+		os.Exit(client.Run(playerName, ip, port, mapWidth, mapHeight))
+	}
 }

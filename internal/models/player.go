@@ -1,10 +1,12 @@
 package models
 
 import (
+	"net"
+
 	"github.com/feereel/pacman/internal/utility"
 )
 
-type MoveDirection uint32
+type MoveDirection byte
 
 const (
 	MoveUp    MoveDirection = 0
@@ -13,17 +15,25 @@ const (
 	MoveLeft  MoveDirection = 3
 )
 
-var MapDirrections = map[MoveDirection]utility.Vector2D[int]{
+var DirToVec = map[MoveDirection]utility.Vector2D[int]{
 	MoveUp:    {X: 0, Y: -1},
 	MoveRight: {X: 1, Y: 0},
 	MoveDown:  {X: 0, Y: 1},
 	MoveLeft:  {X: -1, Y: 0},
 }
 
+var VecToDir = map[utility.Vector2D[int]]MoveDirection{
+	{X: 0, Y: -1}: MoveUp,
+	{X: 1, Y: 0}:  MoveRight,
+	{X: 0, Y: 1}:  MoveDown,
+	{X: -1, Y: 0}: MoveLeft,
+}
+
 type Player struct {
 	Name       string
 	Score      int
 	Controlled bool
+	Conn       net.Conn
 
 	Position  utility.Vector2D[int]
 	Direction utility.Vector2D[int]
@@ -34,7 +44,7 @@ func NewPlayer(name string, startX int, startY int, direction MoveDirection) Pla
 		Name:       name,
 		Score:      0,
 		Position:   utility.Vector2D[int]{X: startX, Y: startY},
-		Direction:  MapDirrections[direction],
+		Direction:  DirToVec[direction],
 		Controlled: false,
 	}
 
@@ -47,5 +57,23 @@ func (player *Player) MoveForward() {
 }
 
 func (player *Player) SetDirection(direction MoveDirection) {
-	player.Direction = MapDirrections[direction]
+	player.Direction = DirToVec[direction]
+}
+
+func NameInPlayers(name string, players []Player) (int, bool) {
+	for i, p := range players {
+		if p.Name == name {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func NameInLPlayers(name string, players []*Player) (int, bool) {
+	for i, p := range players {
+		if p.Name == name {
+			return i, true
+		}
+	}
+	return -1, false
 }

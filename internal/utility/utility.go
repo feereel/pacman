@@ -26,3 +26,11 @@ func (A Vector2D[T]) Sub(B Vector2D[T]) Vector2D[T] {
 		Y: A.Y - B.Y,
 	}
 }
+
+func ReverseBytes(s []byte) (o []byte) {
+	o = make([]byte, len(s))
+	for i := 0; i < len(s); i++ {
+		o[i] = s[len(s)-i-1]
+	}
+	return o
+}

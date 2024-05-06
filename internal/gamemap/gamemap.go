@@ -23,14 +23,9 @@ type GameMap struct {
 	FoodCount int
 }
 
-func NewSymmetricGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, error) {
-	gameMap, err := NewGameMap(Width, Height, occupancyPercantage)
-	if err != nil {
-		return gameMap, err
-	}
-
-	symWidth := Width * 2
-	symHeight := Height * 2
+func ReflectGameMap(gameMap GameMap) (GameMap, error) {
+	symWidth := gameMap.Width * 2
+	symHeight := gameMap.Height * 2
 
 	grid := make([][]Cell, symHeight)
 	for i := range grid {
@@ -41,11 +36,11 @@ func NewSymmetricGameMap(Width int, Height int, occupancyPercantage float32) (Ga
 		Grid:      grid,
 		Width:     symWidth,
 		Height:    symHeight,
-		FoodCount: gameMap.FoodCount * 2,
+		FoodCount: gameMap.FoodCount * 4,
 	}
 
-	for y := 0; y < int(Height); y++ {
-		for x := 0; x < int(Width); x++ {
+	for y := 0; y < int(gameMap.Height); y++ {
+		for x := 0; x < int(gameMap.Width); x++ {
 			symGameMap.Grid[y][x] = gameMap.Grid[y][x]
 			symGameMap.Grid[y][int(symWidth)-x-1] = gameMap.Grid[y][x]
 			symGameMap.Grid[int(symHeight)-y-1][x] = gameMap.Grid[y][x]
@@ -67,9 +62,10 @@ func NewGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, er
 	}
 
 	gameMap := GameMap{
-		Grid:   grid,
-		Width:  Width,
-		Height: Height,
+		Grid:      grid,
+		Width:     Width,
+		Height:    Height,
+		FoodCount: 1,
 	}
 
 	var wallsCount int = int(float32(gameMap.Height*gameMap.Width-4) * occupancyPercantage)
