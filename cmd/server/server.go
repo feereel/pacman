@@ -3,15 +3,18 @@ package server
 import (
 	"fmt"
 	"net"
+	"time"
 
+	"github.com/feereel/pacman/cmd/client"
 	"github.com/feereel/pacman/internal/gamemap"
 	"github.com/feereel/pacman/internal/models"
 	"github.com/feereel/pacman/internal/network"
 	"github.com/feereel/pacman/internal/utility"
 )
 
-func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32) int {
+func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serverName string, onlyServerMode bool) int {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
+	frameTimeout := 100
 
 	if err != nil {
 		fmt.Println(err)
@@ -27,6 +30,17 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32) int 
 		return 1
 	}
 
+	var playerIDToPos = map[int]utility.Vector2D[int]{
+		0: {X: 0, Y: 0},
+		1: {X: mapWidth*2 - 1, Y: 0},
+		2: {X: 0, Y: mapHeight*2 - 1},
+		3: {X: mapWidth*2 - 1, Y: mapHeight*2 - 1},
+	}
+
+	if !onlyServerMode {
+		go client.Run(serverName, "127.0.0.1", port, mapWidth, mapHeight)
+	}
+
 	fmt.Println("Server is listening...")
 	for len(players) < playersCount {
 		conn, err := listener.Accept()
@@ -38,7 +52,7 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32) int 
 
 		fmt.Println("\tA new client is trying to connect...")
 
-		player, err := handleHandshake(conn, gameMap)
+		player, err := handleHandshake(conn, gameMap, playerIDToPos[len(players)])
 		if err != nil {
 			fmt.Println(err)
 			conn.Close()
@@ -50,16 +64,11 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32) int 
 			continue
 		}
 
-		if len(players) == 1 {
-			player.Position.X = mapWidth - 1
-			player.Position.Y = mapHeight - 1
-		}
-
 		players = append(players, player)
 		fmt.Printf("\tA new client connected with name: %s\n", player.Name)
 	}
 
-	frameTimeout := 100
+	fmt.Println(players)
 
 	for _, p := range players {
 		err := network.SendInitMessage(p.Conn, frameTimeout, players)
@@ -75,15 +84,13 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32) int 
 		go handleKeypress(&players[i], i, dirChan)
 	}
 
-	for {
-		id := <-dirChan
-		player := players[id]
-		network.SendServerKey(models.VecToDir[player.Direction], players, player.Name)
-		fmt.Printf("Player %s changed direction. Current %v.\n", player.Name, player.Direction)
-	}
+	go handleKeysend(players, dirChan)
+
+	time.Sleep(time.Second * 100000000)
+	return 0
 }
 
-func handleHandshake(conn net.Conn, gameMap gamemap.GameMap) (models.Player, error) {
+func handleHandshake(conn net.Conn, gameMap gamemap.GameMap, spawnPos utility.Vector2D[int]) (models.Player, error) {
 	name, err := network.RecvPlayerName(conn)
 	if err != nil {
 		return models.Player{}, err
@@ -105,7 +112,7 @@ func handleHandshake(conn net.Conn, gameMap gamemap.GameMap) (models.Player, err
 		Controlled: false,
 		Conn:       conn,
 
-		Position:  utility.Vector2D[int]{X: 0, Y: 0},
+		Position:  spawnPos,
 		Direction: models.DirToVec[models.MoveDown],
 	}, nil
 }
@@ -119,5 +126,12 @@ func handleKeypress(player *models.Player, id int, c chan int) {
 		}
 		c <- id
 		player.SetDirection(dir)
+	}
+}
+
+func handleKeysend(players []models.Player, c chan int) {
+	for {
+		player := players[<-c]
+		network.SendServerKey(models.VecToDir[player.Direction], players, player.Name)
 	}
 }

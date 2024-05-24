@@ -15,7 +15,7 @@ func RecvHeader(conn net.Conn, checkType uint32) (int, error) {
 	data := make([]byte, 12)
 	n, err := conn.Read(data)
 	if n != 12 || err != nil {
-		return 0, err
+		return 0, fmt.Errorf("RecvHeader read error: %v", err)
 	}
 	var magic, ptype, datasize uint32
 	if NetworkEndian == BigEndian {
@@ -51,7 +51,7 @@ func SendHeader(conn net.Conn, ptype uint32, datasize uint32) error {
 	}
 	n, err := conn.Write(data)
 	if n == 0 || err != nil {
-		return err
+		return fmt.Errorf("SendHeader write error: %v", err)
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func SendPlayerName(conn net.Conn, playerName string) error {
 
 	n, err := conn.Write(data)
 	if n == 0 || err != nil {
-		return err
+		return fmt.Errorf("SendPlayerName write error: %v", err)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func RecvPlayerName(conn net.Conn) (string, error) {
 	input := make([]byte, size)
 	n, err := conn.Read(input)
 	if n == 0 || err != nil {
-		return "", err
+		return "", fmt.Errorf("RecvPlayerName read error: %v", err)
 	}
 	if NetworkEndian == BigEndian {
 		return string(input[0:n]), nil
@@ -113,7 +113,7 @@ func SendGameMap(conn net.Conn, gameMap gamemap.GameMap) error {
 
 	n, err := conn.Write(data)
 	if n == 0 || err != nil {
-		return err
+		return fmt.Errorf("SendGameMap write error: %v", err)
 	}
 
 	return nil
@@ -153,7 +153,7 @@ func SendInitMessage(conn net.Conn, frameTimeout int, players []models.Player) e
 	}
 	n, err := conn.Write(data)
 	if n == 0 || err != nil {
-		return err
+		return fmt.Errorf("SendInitMessage write error: %v", err)
 	}
 
 	return nil
@@ -177,7 +177,7 @@ func SendClientKey(conn net.Conn, direction models.MoveDirection) error {
 	}
 	n, err := conn.Write([]byte{byte(direction)})
 	if n == 0 || err != nil {
-		return err
+		return fmt.Errorf("SendClientKey write error: %v", err)
 	}
 	return nil
 }
@@ -191,8 +191,8 @@ func RecvClientKey(conn net.Conn) (models.MoveDirection, error) {
 	// Recv client key
 	input := make([]byte, size)
 	n, err := conn.Read(input)
-	if n != 1 || err != nil {
-		return 0, err
+	if n != 1 && err != nil {
+		return 0, fmt.Errorf("RecvClientKey read error: %v", err)
 	}
 
 	return models.MoveDirection(input[0]), nil
@@ -215,11 +215,11 @@ func SendServerKey(direction models.MoveDirection, players []models.Player, send
 		sendData := append([]byte{byte(direction)}, data...)
 		err := SendHeader(p.Conn, PackageServerKeyboard, uint32(len(sendData)))
 		if err != nil {
-			return err
+			continue
 		}
 		n, err := p.Conn.Write(sendData)
-		if n == 0 || err != nil {
-			return err
+		if n != 0 && err != nil {
+			return fmt.Errorf("SendServerKey write error: %v", err)
 		}
 	}
 
@@ -235,8 +235,8 @@ func RecvServerKey(conn net.Conn) (models.MoveDirection, string, error) {
 	// Recv client key
 	input := make([]byte, size)
 	n, err := conn.Read(input)
-	if n != size || err != nil {
-		return 0, "", err
+	if n != size && err != nil {
+		return 0, "", fmt.Errorf("RecvServerKey read error: %v", err)
 	}
 
 	var name string

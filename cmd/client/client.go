@@ -29,7 +29,13 @@ func Run(clientName, ip string, port, mapWidth, mapHeight int) int {
 		return 1
 	}
 
-	gameMap, err := network.RecvGameMap(serverConn, mapWidth, mapHeight)
+	gameMiniMap, err := network.RecvGameMap(serverConn, mapWidth, mapHeight)
+	if err != nil {
+		fmt.Println(err)
+		return 1
+	}
+
+	gameMap, err := gamemap.ReflectGameMap(gameMiniMap)
 	if err != nil {
 		fmt.Println(err)
 		return 1
@@ -76,7 +82,7 @@ func StartGame(serverConn net.Conn, frameTimeout int, gameMap gamemap.GameMap, c
 	go handleKeypress(serverConn, controlledPlayer, &event, term)
 	go handleServerKeys(serverConn, players)
 
-	for {
+	for gameMap.FoodCount > 0 {
 		term.Render()
 		if event.Ch == 'q' || event.Key == termbox.KeyCtrlC {
 			return 0
@@ -84,6 +90,10 @@ func StartGame(serverConn net.Conn, frameTimeout int, gameMap gamemap.GameMap, c
 		logic.ProcessFrame(players, &gameMap)
 		time.Sleep(time.Millisecond * time.Duration(frameTimeout))
 	}
+
+	term.RenderWin()
+	time.Sleep(time.Second * 5)
+	return 0
 }
 
 func handleKeypress(serverConn net.Conn, player *models.Player, e *termbox.Event, term *terminal.Terminal) {
@@ -117,7 +127,7 @@ func handleServerKeys(serverConn net.Conn, players []*models.Player) {
 	for {
 		dir, name, err := network.RecvServerKey(serverConn)
 		if err != nil {
-			fmt.Println("Error in RecvServerKey function")
+			fmt.Println("Error in RecvServerKey function", err)
 			return
 		}
 		id, isIn := models.NameInLPlayers(name, players)

@@ -68,7 +68,7 @@ func NewGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, er
 		FoodCount: 1,
 	}
 
-	var wallsCount int = int(float32(gameMap.Height*gameMap.Width-4) * occupancyPercantage)
+	var wallsCount = int(float32(gameMap.Height*gameMap.Width-4) * occupancyPercantage)
 
 	gameMap.Grid[0][0] = Player
 	gameMap.Grid[gameMap.Height-1][gameMap.Width-1] = Food
@@ -78,7 +78,7 @@ func NewGameMap(Width int, Height int, occupancyPercantage float32) (GameMap, er
 }
 
 func (gameMap *GameMap) GenerateMap(wallsCount int) {
-	var currentObstacleCount int = 0
+	var currentObstacleCount = 0
 	for i := 0; i < wallsCount; i++ {
 		x := rand.Int() % gameMap.Width
 		y := rand.Int() % gameMap.Height
@@ -117,7 +117,7 @@ func (gameMap GameMap) IsFullyAccessible(currentObstacleCount int) bool {
 	queue = append(queue, utility.Vector2D[int]{X: 0, Y: 0})
 
 	mapFlags[0][0] = true
-	var accesibleCellCount int = 1
+	var accesibleCellCount = 1
 
 	for len(queue) > 0 {
 		cell := queue[0]
@@ -146,7 +146,7 @@ func (gameMap GameMap) IsFullyAccessible(currentObstacleCount int) bool {
 		}
 	}
 
-	var targetAccessibleCellCount int = gameMap.Width*gameMap.Height - currentObstacleCount
+	var targetAccessibleCellCount = gameMap.Width*gameMap.Height - currentObstacleCount
 	return targetAccessibleCellCount == accesibleCellCount
 }
 

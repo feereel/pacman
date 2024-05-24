@@ -50,12 +50,12 @@ func (t *Terminal) setText(x int, y int, text string, v VisualSymbol) (retX, ret
 
 func (t *Terminal) renderBorder() {
 	for y := 0; y < t.GameMap.Height+2; y++ {
-		var v VisualSymbol = ElementToVisual[OutBoundWall]
+		var v = ElementToVisual[OutBoundWall]
 		termbox.SetCell(0, y, v.Val, v.Fg, v.Bg)
 		termbox.SetCell(t.GameMap.Width+1, y, v.Val, v.Fg, v.Bg)
 	}
 	for x := 0; x < t.GameMap.Width+2; x++ {
-		var v VisualSymbol = ElementToVisual[OutBoundWall]
+		var v = ElementToVisual[OutBoundWall]
 		termbox.SetCell(x, 0, v.Val, v.Fg, v.Bg)
 		termbox.SetCell(x, t.GameMap.Height+1, v.Val, v.Fg, v.Bg)
 	}
@@ -64,7 +64,7 @@ func (t *Terminal) renderBorder() {
 func (t *Terminal) renderMap() {
 	for y := 0; y < t.GameMap.Height; y++ {
 		for x := 0; x < t.GameMap.Width; x++ {
-			var v VisualSymbol = ElementToVisual[GameMapElement[t.GameMap.Grid[y][x]]]
+			var v = ElementToVisual[GameMapElement[t.GameMap.Grid[y][x]]]
 			termbox.SetCell(x+1, y+1, v.Val, v.Fg, v.Bg)
 		}
 	}
@@ -111,10 +111,25 @@ func (t *Terminal) Render() {
 	}
 
 	if t.controlledPlayer != nil {
-		var v VisualSymbol = ElementToVisual[ControlledPlayer]
+		var v = ElementToVisual[ControlledPlayer]
 		termbox.SetCell(t.controlledPlayer.Position.X+1, t.controlledPlayer.Position.Y+1, v.Val, v.Fg, v.Bg)
 	}
 
+	termbox.Flush()
+}
+
+func (t *Terminal) RenderWin() {
+	termbox.Clear(termbox.ColorWhite, termbox.ColorDefault)
+	id, _ := models.NameInLPlayers(t.controlledPlayer.Name, t.Players)
+
+	var title = ElementToVisual[TextTitle]
+	var content = ElementToVisual[TextContent]
+
+	x, y := t.setText(0, 0, "Your positon is: ", title)
+	t.setText(x, y, fmt.Sprintf("%v", id), content)
+
+	x, y = t.setText(0, 1, "Score received: ", title)
+	t.setText(x, y, fmt.Sprintf("%v", t.controlledPlayer.Score), content)
 	termbox.Flush()
 }
 
