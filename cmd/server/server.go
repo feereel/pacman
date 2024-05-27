@@ -68,8 +68,6 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serv
 		fmt.Printf("\tA new client connected with name: %s\n", player.Name)
 	}
 
-	fmt.Println(players)
-
 	for _, p := range players {
 		err := network.SendInitMessage(p.Conn, frameTimeout, players)
 		if err != nil {

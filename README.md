@@ -23,7 +23,7 @@ docker build . -t "online-pacman"
 ```
 <strong>Run server<strong>
 ```
-docker run --net=host -it --rm "online-pacman" /app/bin/main -s -p 4444 -name "player1"
+docker run --net=host -it --rm "online-pacman" /app/bin/main -s -p 4444 -n 2 -name "player1"
 ```
 <strong>Run client<strong>
 ```
