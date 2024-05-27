@@ -12,9 +12,10 @@ import (
 	"github.com/feereel/pacman/internal/utility"
 )
 
-func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serverName string, onlyServerMode bool) int {
+var netclock *network.Netclock
+
+func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serverName string, onlyServerMode bool, frameTimeout int) int {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
-	frameTimeout := 100
 
 	if err != nil {
 		fmt.Println(err)
@@ -76,6 +77,8 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serv
 		}
 	}
 
+	netclock = network.NewNetclock(int64(frameTimeout), 0.1)
+
 	dirChan := make(chan int, 1)
 
 	for i := 0; i < len(players); i++ {
@@ -122,6 +125,9 @@ func handleKeypress(player *models.Player, id int, c chan int) {
 			fmt.Printf("Something happend with %v client (%s). Error: %v. \n", id, player.Name, err)
 			return
 		}
+
+		netclock.WaitUntilSafeFrame()
+
 		c <- id
 		player.SetDirection(dir)
 	}

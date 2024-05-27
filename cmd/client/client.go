@@ -14,6 +14,8 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+var netclock *network.Netclock
+
 func Run(clientName, ip string, port, mapWidth, mapHeight int) int {
 
 	serverConn, err := net.Dial("tcp", fmt.Sprintf("%s:%v", ip, port))
@@ -52,6 +54,8 @@ func Run(clientName, ip string, port, mapWidth, mapHeight int) int {
 		fmt.Println(err)
 		return 1
 	}
+
+	netclock = network.NewNetclock(int64(frameTimeout), 0.1)
 
 	return StartGame(serverConn, frameTimeout, gameMap, clientName, players)
 }
@@ -101,6 +105,8 @@ func handleKeypress(serverConn net.Conn, player *models.Player, e *termbox.Event
 	for {
 		*e = term.Poll()
 		if e.Ch == 0 {
+			netclock.WaitUntilSafeFrame()
+
 			switch e.Key {
 			case termbox.KeyArrowUp:
 				err = network.SendClientKey(serverConn, models.MoveUp)

@@ -11,6 +11,24 @@ import (
 	"github.com/feereel/pacman/internal/utility"
 )
 
+type Endian int
+
+var NetworkEndian Endian = BigEndian
+
+const (
+	BigEndian    Endian = iota
+	LittleEndian Endian = iota
+)
+
+const (
+	PackageClientInitial  uint32 = 0x01
+	PackageServerMap      uint32 = 0x10
+	PackageClientReady    uint32 = 0x02
+	PackageGameStart      uint32 = 0x20
+	PackageClientKeyboard uint32 = 0x00
+	PackageServerKeyboard uint32 = 0xffffffff
+)
+
 func RecvHeader(conn net.Conn, checkType uint32) (int, error) {
 	data := make([]byte, 12)
 	n, err := conn.Read(data)
