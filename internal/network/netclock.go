@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -49,6 +50,9 @@ func (c *Netclock) StartClock() {
 
 func (c *Netclock) WaitUntilSafeFrame() {
 	if !c.IsSafe {
+		fmt.Println("Waiting until enter in safe zone...")
 		time.Sleep(time.Until(c.WaitingUntill))
+	} else {
+		fmt.Println("You can send without waiting!")
 	}
 }

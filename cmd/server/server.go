@@ -77,7 +77,7 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serv
 		}
 	}
 
-	netclock = network.NewNetclock(int64(frameTimeout), 0.1)
+	netclock = network.NewNetclock(int64(frameTimeout), 0.3)
 
 	dirChan := make(chan int, 1)
 
