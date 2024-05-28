@@ -81,6 +81,7 @@ func SendPlayerName(conn net.Conn, playerName string) error {
 	} else {
 		data = utility.ReverseBytes([]byte(playerName))
 	}
+
 	if len(data) > 255 {
 		return errors.New("name is longer than 255 characters")
 	}

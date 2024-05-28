@@ -50,12 +50,13 @@ func Run(clientName, ip string, port, mapWidth, mapHeight int) int {
 	}
 
 	frameTimeout, players, err := network.RecvInitMessage(serverConn)
+	fmt.Println(players)
 	if err != nil {
 		fmt.Println(err)
 		return 1
 	}
 
-	netclock = network.NewNetclock(int64(frameTimeout), 0.1)
+	netclock = network.NewNetclock(int64(frameTimeout), 0.25)
 
 	return StartGame(serverConn, frameTimeout, gameMap, clientName, players)
 }
@@ -105,19 +106,21 @@ func handleKeypress(serverConn net.Conn, player *models.Player, e *termbox.Event
 	for {
 		*e = term.Poll()
 		if e.Ch == 0 {
-			netclock.WaitUntilSafeFrame()
-
 			switch e.Key {
 			case termbox.KeyArrowUp:
+				netclock.WaitUntilSafeFrame()
 				err = network.SendClientKey(serverConn, models.MoveUp)
 				player.SetDirection(models.MoveUp)
 			case termbox.KeyArrowDown:
+				netclock.WaitUntilSafeFrame()
 				err = network.SendClientKey(serverConn, models.MoveDown)
 				player.SetDirection(models.MoveDown)
 			case termbox.KeyArrowLeft:
+				netclock.WaitUntilSafeFrame()
 				err = network.SendClientKey(serverConn, models.MoveLeft)
 				player.SetDirection(models.MoveLeft)
 			case termbox.KeyArrowRight:
+				netclock.WaitUntilSafeFrame()
 				err = network.SendClientKey(serverConn, models.MoveRight)
 				player.SetDirection(models.MoveRight)
 			}

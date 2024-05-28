@@ -77,7 +77,7 @@ func Run(port, playersCount, mapWidth, mapHeight int, mapOccupancy float32, serv
 		}
 	}
 
-	netclock = network.NewNetclock(int64(frameTimeout), 0.3)
+	netclock = network.NewNetclock(int64(frameTimeout), 0.25)
 
 	dirChan := make(chan int, 1)
 
@@ -126,14 +126,13 @@ func handleKeypress(player *models.Player, id int, c chan int) {
 			return
 		}
 
-		netclock.WaitUntilSafeFrame()
-
 		c <- id
 		player.SetDirection(dir)
 	}
 }
 
 func handleKeysend(players []models.Player, c chan int) {
+	netclock.WaitUntilSafeFrame()
 	for {
 		player := players[<-c]
 		network.SendServerKey(models.VecToDir[player.Direction], players, player.Name)

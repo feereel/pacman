@@ -25,7 +25,7 @@ func NewNetclock(FrameTimeout int64, FrameHole float64) *Netclock {
 		StartTime:    currentTime,
 		FrameTimeout: time.Duration(FrameTimeout) * time.Millisecond,
 
-		SafeFrameTime:   time.Duration(FrameTimeout-dif) * time.Millisecond,
+		SafeFrameTime:   time.Duration(FrameTimeout-dif-dif) * time.Millisecond,
 		UnsafeFrameTime: time.Duration(dif) * time.Millisecond,
 
 		WaitingUntill: currentTime,
@@ -36,12 +36,15 @@ func NewNetclock(FrameTimeout int64, FrameHole float64) *Netclock {
 }
 
 func (c *Netclock) StartClock() {
+	c.WaitingUntill = c.WaitingUntill.Add(c.UnsafeFrameTime)
+	c.IsSafe = false
+	time.Sleep(time.Until(c.WaitingUntill))
 	for {
 		c.WaitingUntill = c.WaitingUntill.Add(c.SafeFrameTime)
 		c.IsSafe = true
 		time.Sleep(time.Until(c.WaitingUntill))
 
-		c.WaitingUntill = c.WaitingUntill.Add(c.UnsafeFrameTime)
+		c.WaitingUntill = c.WaitingUntill.Add(c.UnsafeFrameTime * 2)
 		c.IsSafe = false
 		time.Sleep(time.Until(c.WaitingUntill))
 	}
