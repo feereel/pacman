@@ -87,6 +87,8 @@ func StartGame(serverConn net.Conn, frameTimeout int, gameMap gamemap.GameMap, c
 	go handleKeypress(serverConn, controlledPlayer, &event, term)
 	go handleServerKeys(serverConn, players)
 
+	var tickEndTime = netclock.StartTime.Add(netclock.FrameTimeout)
+
 	for gameMap.FoodCount > 0 {
 		term.Render()
 		if event.Ch == 'q' || event.Key == termbox.KeyCtrlC {
@@ -94,7 +96,8 @@ func StartGame(serverConn net.Conn, frameTimeout int, gameMap gamemap.GameMap, c
 		}
 		logic.ProcessFrame(players, &gameMap)
 
-		time.Sleep(time.Until(netclock.NextFrameEnd))
+		time.Sleep(time.Until(tickEndTime))
+		tickEndTime = tickEndTime.Add(netclock.FrameTimeout)
 	}
 
 	term.RenderWin()
