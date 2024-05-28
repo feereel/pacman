@@ -19,12 +19,13 @@ type Netclock struct {
 
 func NewNetclock(FrameTimeout int64, FrameHole float64) *Netclock {
 	var currentTime = time.Now()
+	var nextFrameEnd = currentTime.Add(time.Duration(FrameTimeout) * time.Millisecond)
 	var dif = int64(float64(FrameTimeout) * FrameHole)
 
 	var c = Netclock{
 		FrameHole:    FrameHole,
 		StartTime:    currentTime,
-		NextFrameEnd: currentTime,
+		NextFrameEnd: nextFrameEnd,
 		FrameTimeout: time.Duration(FrameTimeout) * time.Millisecond,
 
 		SafeFrameTime:   time.Duration(FrameTimeout-dif-dif) * time.Millisecond,
