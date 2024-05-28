@@ -93,7 +93,7 @@ func StartGame(serverConn net.Conn, frameTimeout int, gameMap gamemap.GameMap, c
 			return 0
 		}
 		logic.ProcessFrame(players, &gameMap)
-		time.Sleep(time.Millisecond * time.Duration(frameTimeout))
+		time.Sleep(time.Until(netclock.NextFrameEnd))
 	}
 
 	term.RenderWin()

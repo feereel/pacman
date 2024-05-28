@@ -7,6 +7,7 @@ import (
 type Netclock struct {
 	FrameHole    float64
 	StartTime    time.Time
+	NextFrameEnd time.Time
 	FrameTimeout time.Duration
 
 	SafeFrameTime   time.Duration
@@ -23,6 +24,7 @@ func NewNetclock(FrameTimeout int64, FrameHole float64) *Netclock {
 	var c = Netclock{
 		FrameHole:    FrameHole,
 		StartTime:    currentTime,
+		NextFrameEnd: currentTime,
 		FrameTimeout: time.Duration(FrameTimeout) * time.Millisecond,
 
 		SafeFrameTime:   time.Duration(FrameTimeout-dif-dif) * time.Millisecond,
@@ -40,6 +42,8 @@ func (c *Netclock) StartClock() {
 	c.IsSafe = false
 	time.Sleep(time.Until(c.WaitingUntill))
 	for {
+		c.NextFrameEnd = c.NextFrameEnd.Add(c.FrameTimeout)
+
 		c.WaitingUntill = c.WaitingUntill.Add(c.SafeFrameTime)
 		c.IsSafe = true
 		time.Sleep(time.Until(c.WaitingUntill))
